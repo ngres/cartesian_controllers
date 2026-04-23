@@ -114,6 +114,12 @@ CartesianComplianceController::on_activate(const rclcpp_lifecycle::State & previ
   {
     return TYPE::ERROR;
   }
+
+  m_compliance_wrench_publisher =
+    std::make_shared<realtime_tools::RealtimePublisher<geometry_msgs::msg::WrenchStamped>>(
+      get_node()->create_publisher<geometry_msgs::msg::WrenchStamped>(
+        std::string(get_node()->get_name()) + "/compliance_wrench", 3));
+
   return TYPE::SUCCESS;
 }
 
@@ -153,6 +159,19 @@ controller_interface::return_type CartesianComplianceController::update(
   // Write final commands to the hardware interface
   Base::writeJointControlCmds();
 
+  if (m_compliance_wrench_publisher->trylock())
+  {
+    m_compliance_wrench_publisher->msg_.header.stamp = time;
+    m_compliance_wrench_publisher->msg_.header.frame_id = Base::m_robot_base_link;
+    m_compliance_wrench_publisher->msg_.wrench.force.x = m_spring_wrench[0];
+    m_compliance_wrench_publisher->msg_.wrench.force.y = m_spring_wrench[1];
+    m_compliance_wrench_publisher->msg_.wrench.force.z = m_spring_wrench[2];
+    m_compliance_wrench_publisher->msg_.wrench.torque.x = m_spring_wrench[3];
+    m_compliance_wrench_publisher->msg_.wrench.torque.y = m_spring_wrench[4];
+    m_compliance_wrench_publisher->msg_.wrench.torque.z = m_spring_wrench[5];
+    m_compliance_wrench_publisher->unlockAndPublish();
+  }
+
   return controller_interface::return_type::OK;
 }
 
@@ -168,13 +187,11 @@ ctrl::Vector6D CartesianComplianceController::computeComplianceError()
 
   m_stiffness = tmp.asDiagonal();
 
+  m_spring_wrench =
+    Base::displayInBaseLink(m_stiffness, m_compliance_ref_link) * MotionBase::computeMotionError();
+
   ctrl::Vector6D net_force =
-
-    // Spring force in base orientation
-    Base::displayInBaseLink(m_stiffness, m_compliance_ref_link) * MotionBase::computeMotionError()
-
-    // Sensor and target force in base orientation
-    + ForceBase::computeForceError();
+    m_spring_wrench + ForceBase::computeForceError();
 
   return net_force;
 }

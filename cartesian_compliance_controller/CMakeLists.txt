@@ -10,10 +10,12 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif(NOT CMAKE_BUILD_TYPE)
 
-find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+find_package(Eigen3 REQUIRED NO_MODULE)
 add_definitions(-DEIGEN_MPL2_ONLY)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(realtime_tools REQUIRED)
 find_package(cartesian_controller_base REQUIRED)
 find_package(cartesian_motion_controller REQUIRED)
 find_package(cartesian_force_controller REQUIRED)
@@ -21,6 +23,8 @@ find_package(cartesian_force_controller REQUIRED)
 # Convenience variable for dependencies
 set(THIS_PACKAGE_INCLUDE_DEPENDS
         rclcpp
+        geometry_msgs
+        realtime_tools
         cartesian_controller_base
         cartesian_motion_controller
         cartesian_force_controller

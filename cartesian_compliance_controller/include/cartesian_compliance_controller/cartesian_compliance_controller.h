@@ -46,6 +46,8 @@
 #include <cartesian_motion_controller/cartesian_motion_controller.h>
 
 #include <controller_interface/controller_interface.hpp>
+#include <geometry_msgs/msg/wrench_stamped.hpp>
+#include <realtime_tools/realtime_publisher.hpp>
 
 namespace cartesian_compliance_controller
 {
@@ -103,6 +105,9 @@ private:
 
   ctrl::Matrix6D m_stiffness;
   std::string m_compliance_ref_link;
+  ctrl::Vector6D m_spring_wrench;
+  realtime_tools::RealtimePublisherSharedPtr<geometry_msgs::msg::WrenchStamped>
+    m_compliance_wrench_publisher;
 };
 
 }  // namespace cartesian_compliance_controller
